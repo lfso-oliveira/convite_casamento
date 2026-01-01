@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Convite de Casamento</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Montserrat:wght@300;400;500&family=Dancing+Script:wght@600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="hero">
+    <div class="hero__content">
+      <p class="hero__title">O Nosso Casamento</p>
+      <img class="hero__logo" src="larissa.png" alt="Larissa &amp; Felipe">
+    </div>
+  </header>
+
+  <main>
+    <section class="quote">
+      <p class="quote__text">“Um cordão tríplice não pode ser facilmente rompido.”</p>
+      <p class="quote__ref">Eclesiastes 4:12</p>
+    </section>
+
+    <section class="photo-section" aria-label="Mãos entrelaçadas">
+      <img class="photo-section__img" src="mãos.png" alt="Mãos entrelaçadas">
+    </section>
+
+    <section class="invite">
+      <p class="invite__intro">E COM IMENSA ALEGRIA QUE CONVIDAMOS VOCÊ PARA COMEMORAR ESSE MOMENTO ÚNICO</p>
+      <p class="invite__date">02.05.26</p>
+      <p class="invite__time">SÁBADO ÀS 16:00H</p>
+    </section>
+
+    <section class="gallery" aria-label="Galeria de momentos">
+      <div class="gallery__grid">
+        <img class="gallery__img gallery__img--a" src="L&F-1.jpg" alt="Larissa e Felipe caminhando de mãos dadas">
+        <img class="gallery__img gallery__img--b" src="L&F-2.jpg" alt="Larissa e Felipe se abraçando e dançando">
+        <img class="gallery__img gallery__img--c" src="L&F-3.jpg" alt="Detalhe das mãos com alianças">
+      </div>
+    </section>
+
+    <section class="location" aria-label="Local da cerimônia e recepção">
+      <div class="location__card">
+        <p class="location__script">local</p>
+        <p class="location__eyebrow">Cerimônia &amp; Recepção</p>
+        <h2 class="location__name">Sítio 03 irmãos</h2>
+        <p class="location__address">R. Joaquim Mizael Rosa, SN</p>
+        <p class="location__city">Realengo | Divinopólis</p>
+        <div class="location__line"></div>
+        <div class="location__actions">
+          <a class="location__btn" href="#" aria-label="Ver localização">Localização</a>
+          <a class="location__btn" href="#" aria-label="Confirmar presença">Confirmação de presença</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="end-photo" aria-label="Foto final">
+      <img class="end-photo__img" src="L&F-104.png" alt="Larissa e Felipe">
+    </section>
+  </main>
+
+  <section class="audio-player" aria-label="Trilha sonora">
+    <div id="audio-pill" class="audio-visualizer" role="button" tabindex="0" aria-label="Tocar ou pausar Those Eyes - New West">
+      <span class="audio-track">Those Eyes – New West</span>
+      <canvas id="music-visualizer" width="160" height="36" aria-hidden="true"></canvas>
+    </div>
+    <audio id="bg-music" src="musica.mp3" loop preload="auto"></audio>
+  </section>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const audio = document.getElementById("bg-music");
+      const canvas = document.getElementById("music-visualizer");
+      const pill = document.getElementById("audio-pill");
+      const ctx = canvas?.getContext("2d");
+
+      if (!audio || !canvas || !ctx || !pill) return;
+
+      let audioCtx;
+      let analyser;
+      let dataArray;
+      let animationId;
+      let setupDone = false;
+
+      const setPlayingState = (isPlaying) => {
+        pill.classList.toggle("is-playing", isPlaying);
+      };
+
+      const setupAudioGraph = () => {
+        if (setupDone) return;
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 256;
+        const source = audioCtx.createMediaElementSource(audio);
+        source.connect(analyser);
+        analyser.connect(audioCtx.destination);
+        dataArray = new Uint8Array(analyser.frequencyBinCount);
+        setupDone = true;
+      };
+
+      const draw = () => {
+        if (!analyser) return;
+        const { width, height } = canvas;
+        ctx.clearRect(0, 0, width, height);
+        analyser.getByteFrequencyData(dataArray);
+
+        const barCount = 32;
+        const step = Math.floor(dataArray.length / barCount);
+        const barWidth = width / barCount;
+
+        for (let i = 0; i < barCount; i++) {
+          const value = dataArray[i * step] / 255;
+          const barHeight = Math.max(8, value * height);
+          const x = i * barWidth;
+          const y = height - barHeight;
+
+          const gradient = ctx.createLinearGradient(0, y, 0, height);
+          gradient.addColorStop(0, "#2b2b2b");
+          gradient.addColorStop(1, "#8a6f4d");
+
+          ctx.fillStyle = gradient;
+          if (ctx.roundRect) {
+            ctx.beginPath();
+            ctx.roundRect(x + 2, y, barWidth - 4, barHeight, 4);
+            ctx.fill();
+          } else {
+            ctx.fillRect(x + 2, y, barWidth - 4, barHeight);
+          }
+        }
+        animationId = requestAnimationFrame(draw);
+      };
+
+      const startVisualizer = () => {
+        if (animationId) cancelAnimationFrame(animationId);
+        draw();
+      };
+
+      const playMusic = async () => {
+        try {
+          setupAudioGraph();
+          await audioCtx.resume();
+          await audio.play();
+          startVisualizer();
+          setPlayingState(true);
+          return true;
+        } catch (err) {
+          setPlayingState(false);
+          return false;
+        }
+      };
+
+      const pauseMusic = () => {
+        audio.pause();
+        if (animationId) cancelAnimationFrame(animationId);
+        setPlayingState(false);
+      };
+
+      const togglePlayback = async () => {
+        if (audio.paused) await playMusic();
+        else pauseMusic();
+      };
+
+      pill.addEventListener("click", togglePlayback);
+      pill.addEventListener("keydown", async (evt) => {
+        if (evt.key === "Enter" || evt.key === " ") {
+          evt.preventDefault();
+          await togglePlayback();
+        }
+      });
+
+      // Tenta tocar automaticamente ao abrir
+      playMusic();
+    });
+  </script>
+</body>
+</html>
+
