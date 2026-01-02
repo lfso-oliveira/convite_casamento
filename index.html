@@ -204,6 +204,20 @@
       // Tenta tocar automaticamente ao abrir
       playMusic();
 
+      // Se o autoplay for bloqueado, tenta novamente na primeira interação
+      const interactionHandler = async () => {
+        await playMusic();
+      };
+      ["click", "touchstart"].forEach((evt) => {
+        window.addEventListener(
+          evt,
+          () => {
+            interactionHandler();
+          },
+          { once: true, passive: true }
+        );
+      });
+
       // RSVP via Supabase
       const form = document.getElementById("rsvp-form");
       const submitBtn = document.getElementById("rsvp-submit");
