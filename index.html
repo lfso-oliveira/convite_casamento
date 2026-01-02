@@ -51,7 +51,7 @@
         <div class="location__line"></div>
         <div class="location__actions">
           <a class="location__btn" href="https://maps.app.goo.gl/jW3iW8QwrLAAqswH6" aria-label="Ver localização">Localização</a>
-          <a class="location__btn" href="#" aria-label="Confirmar presença">Confirmação de presença</a>
+          <a class="location__btn" href="#" data-open-rsvp aria-label="Confirmar presença">Confirmação de presença</a>
         </div>
       </div>
     </section>
@@ -61,20 +61,51 @@
     </section>
   </main>
 
-  <section class="audio-player" aria-label="Trilha sonora">
-    <div id="audio-pill" class="audio-visualizer" role="button" tabindex="0" aria-label="Tocar ou pausar Those Eyes - New West">
-      <span class="audio-track">Those Eyes – New West</span>
-      <canvas id="music-visualizer" width="160" height="36" aria-hidden="true"></canvas>
-    </div>
-    <audio id="bg-music" src="musica.mp3" loop preload="auto"></audio>
-  </section>
+  <div id="rsvp-modal" class="modal" aria-hidden="true">
+    <div class="modal__overlay" data-close-rsvp aria-hidden="true"></div>
+    <div class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="rsvp-title">
+      <button class="modal__close" type="button" data-close-rsvp aria-label="Fechar confirmação">×</button>
+      <div class="section__header">
+        <p class="eyebrow">Confirmação</p>
+        <h2 id="rsvp-title">Confirme sua presença</h2>
+        <p>Conte se poderá estar conosco e quantos acompanhantes virão.</p>
+      </div>
 
+      <form id="rsvp-form" class="rsvp" autocomplete="on">
+        <div class="rsvp__list">
+          <div class="rsvp__list-header">
+            <label for="guest-0">Nomes do convite</label>
+          </div>
+          <div class="rsvp__guests" id="guest-list"></div>
+        </div>
+
+        <button id="rsvp-submit" type="submit" class="btn btn--outline">Confirmar presença</button>
+        <p id="rsvp-feedback" class="rsvp__feedback" aria-live="polite"></p>
+      </form>
+    </div>
+  </div>
+
+    <section class="audio-player" aria-label="Trilha sonora">
+      <div id="audio-pill" class="audio-visualizer" role="button" tabindex="0" aria-label="Tocar ou pausar Those Eyes - New West">
+        <span class="audio-track">Those Eyes – New West</span>
+        <canvas id="music-visualizer" width="160" height="36" aria-hidden="true"></canvas>
+      </div>
+      <audio id="bg-music" src="musica.mp3" loop preload="auto" autoplay playsinline></audio>
+    </section>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     document.addEventListener("DOMContentLoaded", () => {
       const audio = document.getElementById("bg-music");
       const canvas = document.getElementById("music-visualizer");
       const pill = document.getElementById("audio-pill");
       const ctx = canvas?.getContext("2d");
+      const modal = document.getElementById("rsvp-modal");
+      const modalDialog = modal?.querySelector(".modal__dialog");
+      const openers = document.querySelectorAll("[data-open-rsvp]");
+      const closers = modal?.querySelectorAll("[data-close-rsvp]");
+      const guestList = document.getElementById("guest-list");
+      let guestsInitialized = false;
 
       if (!audio || !canvas || !ctx || !pill) return;
 
@@ -172,6 +203,232 @@
 
       // Tenta tocar automaticamente ao abrir
       playMusic();
+
+      // RSVP via Supabase
+      const form = document.getElementById("rsvp-form");
+      const submitBtn = document.getElementById("rsvp-submit");
+      const feedback = document.getElementById("rsvp-feedback");
+      const SUPABASE_URL = "https://jlkelwndkdsqlltjtamq.supabase.co";
+      const SUPABASE_ANON_KEY = "sb_publishable_HLEnnvbxQt7jHzHhThK9bw_PzcdI2F2";
+      const hasRealConfig =
+        SUPABASE_URL && SUPABASE_ANON_KEY &&
+        !SUPABASE_URL.includes("SEU_PROJETO") &&
+        !SUPABASE_ANON_KEY.includes("SUA_CHAVE");
+      const supabaseClient =
+        window?.supabase && hasRealConfig
+          ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+          : null;
+
+      const setFeedback = (message, type = "info") => {
+        if (!feedback) return;
+        feedback.textContent = message;
+        feedback.dataset.status = type;
+      };
+
+      if (form) {
+        form.addEventListener("submit", async (evt) => {
+          evt.preventDefault();
+
+          if (!supabaseClient) {
+            setFeedback("Configure o Supabase (URL e anon key) para salvar.", "error");
+            return;
+          }
+
+          const formData = new FormData(form);
+          const guests = Array.from(form.querySelectorAll(".rsvp__guest"))
+            .map((el) => {
+              const name = el.querySelector('input[name="convidados[]"]')?.value.trim();
+              const status = el.dataset.status || "aceito";
+              return name ? { nome: name, status } : null;
+            })
+            .filter(Boolean);
+          if (!guests.length) {
+            setFeedback("Adicione ou mantenha ao menos um convidado.", "error");
+            return;
+          }
+          const payload = {
+            convidados: guests,
+            origem: "convite",
+          };
+
+          setFeedback("Enviando sua confirmação...", "info");
+          if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.textContent = "Enviando...";
+          }
+
+          const { error } = await supabaseClient.from("rsvp").insert([payload]);
+
+          if (error) {
+            console.error("Supabase RSVP error:", error);
+            setFeedback(`Não foi possível salvar: ${error.message || "Tente novamente."}`, "error");
+          } else {
+            setFeedback("Presença registrada! Obrigado ❤", "success");
+            form.reset();
+          }
+
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = "Confirmar presença";
+          }
+        });
+      }
+
+      const parseGuestsFromUrl = () => {
+        const search = window.location.search.replace(/^\?/, "");
+        if (!search) return [];
+
+        const params = new URLSearchParams(search);
+        const names = [];
+
+        params.forEach((value, key) => {
+          if (value) {
+            value
+              .split(/[,|]/)
+              .map((v) => decodeURIComponent(v).trim())
+              .forEach((v) => v && names.push(v));
+          }
+          if (key && !value) {
+            names.push(decodeURIComponent(key).trim());
+          }
+        });
+
+        // Captura partes sem "=" em querys como ?fulano&beltrano
+        search
+          .split("&")
+          .filter((p) => p && !p.includes("="))
+          .map((p) => decodeURIComponent(p).trim())
+          .forEach((p) => names.push(p));
+
+        // Se houver "nomes=" com "&", já foi pego acima; garante deduplicação
+        return Array.from(new Set(names.filter(Boolean)));
+      };
+
+      const setGuestStatus = (row, status) => {
+        row.dataset.status = status;
+        row.querySelectorAll(".rsvp__toggle").forEach((btn) => {
+          const btnStatus = btn.dataset.setStatus;
+          btn.classList.toggle("is-active", btnStatus === status);
+        });
+      };
+
+      const createGuestField = (index, initialName = "", initialStatus = "aceito") => {
+        const wrapper = document.createElement("div");
+        wrapper.className = "rsvp__guest";
+        wrapper.dataset.status = initialStatus;
+        const input = document.createElement("input");
+        input.type = "text";
+        input.name = "convidados[]";
+        input.placeholder = "Nome do convidado";
+        input.id = `guest-${index}`;
+        input.value = initialName;
+
+        const actions = document.createElement("div");
+        actions.className = "rsvp__actions";
+
+        const acceptBtn = document.createElement("button");
+        acceptBtn.type = "button";
+        acceptBtn.className = "rsvp__toggle is-accept";
+        acceptBtn.dataset.setStatus = "aceito";
+        acceptBtn.textContent = "✔";
+        acceptBtn.setAttribute("aria-label", "Aceitar");
+
+        const declineBtn = document.createElement("button");
+        declineBtn.type = "button";
+        declineBtn.className = "rsvp__toggle is-decline";
+        declineBtn.dataset.setStatus = "recusado";
+        declineBtn.textContent = "✕";
+        declineBtn.setAttribute("aria-label", "Recusar");
+
+        [acceptBtn, declineBtn].forEach((btn) => {
+          btn.addEventListener("click", () => setGuestStatus(wrapper, btn.dataset.setStatus));
+        });
+
+        actions.appendChild(acceptBtn);
+        actions.appendChild(declineBtn);
+
+        wrapper.appendChild(input);
+        wrapper.appendChild(actions);
+
+        setGuestStatus(wrapper, initialStatus);
+        return wrapper;
+      };
+
+      const ensureGuestsLoaded = () => {
+        if (!guestList || guestsInitialized) return;
+        const names = parseGuestsFromUrl();
+        if (!names.length) {
+          guestList.innerHTML = "";
+          guestList.appendChild(createGuestField(0, "Convidado", "aceito"));
+          setFeedback("Nenhum nome no link. Edite a URL: ?fulano&beltrano", "error");
+        } else {
+          guestList.innerHTML = "";
+          names.forEach((name, idx) => {
+            guestList.appendChild(createGuestField(idx, name, "aceito"));
+          });
+        }
+        guestsInitialized = true;
+      };
+
+      // Focus trap básico dentro do modal
+      const focusableSelectors =
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+      modalDialog?.addEventListener("keydown", (evt) => {
+        if (evt.key !== "Tab") return;
+        const focusables = modalDialog.querySelectorAll(focusableSelectors);
+        const focusArray = Array.from(focusables).filter(
+          (el) => !el.hasAttribute("disabled")
+        );
+        if (!focusArray.length) return;
+        const first = focusArray[0];
+        const last = focusArray[focusArray.length - 1];
+        if (evt.shiftKey && document.activeElement === first) {
+          evt.preventDefault();
+          last.focus();
+        } else if (!evt.shiftKey && document.activeElement === last) {
+          evt.preventDefault();
+          first.focus();
+        }
+      });
+
+      const openModal = () => {
+        if (!modal) return;
+        modal.classList.add("is-open");
+        modal.setAttribute("aria-hidden", "false");
+        const firstInput = modal.querySelector("input, select, textarea, button");
+        if (firstInput) setTimeout(() => firstInput.focus(), 80);
+      };
+
+      const closeModal = () => {
+        if (!modal) return;
+        modal.classList.remove("is-open");
+        modal.setAttribute("aria-hidden", "true");
+      };
+
+      openers.forEach((el) =>
+        el.addEventListener("click", (evt) => {
+          evt.preventDefault();
+          ensureGuestsLoaded();
+          openModal();
+        })
+      );
+
+      closers?.forEach((el) =>
+        el.addEventListener("click", (evt) => {
+          evt.preventDefault();
+          closeModal();
+        })
+      );
+
+      modal?.addEventListener("click", (evt) => {
+        if (evt.target === modal) closeModal();
+      });
+
+      document.addEventListener("keydown", (evt) => {
+        if (evt.key === "Escape" && modal?.classList.contains("is-open")) {
+          closeModal();
+        }
+      });
     });
   </script>
 </body>
