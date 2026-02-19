@@ -155,17 +155,25 @@ const fmtDate = (iso) => {
 
 const buildSummary = (rows) => {
   const guests = rows.flatMap(r => r.convidados || []);
+
   const total = guests.length;
   const criancas = guests.filter(g => isCrianca(g.nome)).length;
   const reais = total - criancas;
-  const aceitos = guests.filter(g => g.status === "aceito").length;
+
+  const aceitosTotal = guests.filter(g => g.status === "aceito").length;
+
+  const aceitosReais = guests.filter(g =>
+    g.status === "aceito" && !isCrianca(g.nome)
+  ).length;
+
   const recusados = guests.filter(g => g.status === "recusado").length;
 
   summaryBox.innerHTML = `
     <span class="pill">Total convidados: ${total}</span>
     <span class="pill">Convidados reais: ${reais}</span>
     <span class="pill">Crianças: ${criancas}</span>
-    <span class="pill green">Aceitos: ${aceitos}</span>
+    <span class="pill green">Aceitos (total): ${aceitosTotal}</span>
+    <span class="pill green">Aceitos reais: ${aceitosReais}</span>
     <span class="pill red">Recusados: ${recusados}</span>
   `;
 };
@@ -176,7 +184,7 @@ const salvar = async (rowIndex) => {
   const { error } = await supabaseClient
     .from("rsvp")
     .update({ convidados: row.convidados })
-    .eq("id", row.id);   // ✅ AGORA USA ID
+    .eq("id", row.id);
 
   if (error) {
     alert("Erro ao salvar: " + error.message);
@@ -245,10 +253,15 @@ const renderRows = (rows) => {
 };
 
 const load = async () => {
-  const { data } = await supabaseClient
+  const { data, error } = await supabaseClient
     .from("rsvp")
     .select("id,convidados,mensagem,origem,created_at")
     .order("created_at", { ascending: false });
+
+  if (error) {
+    alert(error.message);
+    return;
+  }
 
   GLOBAL_DATA = data || [];
 
