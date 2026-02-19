@@ -173,12 +173,17 @@ const buildSummary = (rows) => {
 const salvar = async (rowIndex) => {
   const row = GLOBAL_DATA[rowIndex];
 
-  await supabaseClient
+  const { error } = await supabaseClient
     .from("rsvp")
     .update({ convidados: row.convidados })
-    .eq("created_at", row.created_at);
+    .eq("id", row.id);   // ✅ AGORA USA ID
 
-  load();
+  if (error) {
+    alert("Erro ao salvar: " + error.message);
+    console.error(error);
+  } else {
+    load();
+  }
 };
 
 function editarNome(rowIndex, guestIndex) {
@@ -242,7 +247,7 @@ const renderRows = (rows) => {
 const load = async () => {
   const { data } = await supabaseClient
     .from("rsvp")
-    .select("convidados,mensagem,origem,created_at")
+    .select("id,convidados,mensagem,origem,created_at")
     .order("created_at", { ascending: false });
 
   GLOBAL_DATA = data || [];
