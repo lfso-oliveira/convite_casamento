@@ -79,7 +79,7 @@
     }
     .status.accept { background: #e4f3e8; color: var(--green); border-color: #c7e3cf; }
     .status.decline { background: #f7e4e4; color: var(--red); border-color: #e8c6c6; }
-    .tag { font-size: 0.82rem; color: var(--muted); }
+    .tag { font-size: 0.82rem; color: var(--muted); margin-left: 6px; }
     .small { font-size: 0.85rem; color: var(--muted); }
     .error { color: var(--red); margin-top: 0.6rem; }
     .loading { color: var(--muted); margin-top: 0.6rem; }
@@ -113,10 +113,12 @@
   <script>
     const SUPABASE_URL = "https://jlkelwndkdsqlltjtamq.supabase.co";
     const SUPABASE_ANON_KEY = "sb_publishable_HLEnnvbxQt7jHzHhThK9bw_PzcdI2F2";
+
     const hasRealConfig =
       SUPABASE_URL && SUPABASE_ANON_KEY &&
       !SUPABASE_URL.includes("SEU_PROJETO") &&
       !SUPABASE_ANON_KEY.includes("SUA_CHAVE");
+
     const supabaseClient =
       window?.supabase && hasRealConfig
         ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
@@ -139,13 +141,24 @@
       return d.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
     };
 
+    const isCrianca = (nome) => {
+      if (!nome) return false;
+      return nome.toLowerCase().includes("(criança)");
+    };
+
     const buildSummary = (rows) => {
       const guests = rows.flatMap((row) => row.convidados || []);
-      const accepted = guests.filter((g) => g.status === "aceito").length;
-      const declined = guests.filter((g) => g.status === "recusado").length;
+
       const total = guests.length;
+      const criancas = guests.filter(g => isCrianca(g.nome)).length;
+      const reais = total - criancas;
+      const accepted = guests.filter(g => g.status === "aceito").length;
+      const declined = guests.filter(g => g.status === "recusado").length;
+
       summaryBox.innerHTML = `
         <span class="pill">Total convidados: ${total}</span>
+        <span class="pill">Convidados reais: ${reais}</span>
+        <span class="pill">Crianças: ${criancas}</span>
         <span class="pill green">Aceitos: ${accepted}</span>
         <span class="pill red">Recusados: ${declined}</span>
       `;
@@ -153,22 +166,35 @@
 
     const renderRows = (rows) => {
       tbody.innerHTML = "";
+
       if (!rows.length) {
         tbody.innerHTML = `<tr><td colspan="5" class="small">Nenhum registro encontrado.</td></tr>`;
         return;
       }
+
       rows.forEach((row) => {
         const message = row.mensagem || "";
         const origem = row.origem || "-";
+
         (row.convidados || []).forEach((guest) => {
           const tr = document.createElement("tr");
+
+          const criancaTag = isCrianca(guest.nome)
+            ? '<span class="tag">(Criança)</span>'
+            : '';
+
           tr.innerHTML = `
-            <td>${guest.nome || "-"}</td>
-            <td><span class="status ${guest.status === "aceito" ? "accept" : "decline"}">${guest.status === "aceito" ? "Aceito" : "Recusado"}</span></td>
+            <td>${guest.nome || "-"} ${criancaTag}</td>
+            <td>
+              <span class="status ${guest.status === "aceito" ? "accept" : "decline"}">
+                ${guest.status === "aceito" ? "Aceito" : "Recusado"}
+              </span>
+            </td>
             <td class="small">${message}</td>
             <td class="small">${origem}</td>
             <td class="small">${fmtDate(row.created_at)}</td>
           `;
+
           tbody.appendChild(tr);
         });
       });
@@ -180,6 +206,7 @@
         setError("Configure o SUPABASE_URL e SUPABASE_ANON_KEY.");
         return;
       }
+
       const { data, error } = await supabaseClient
         .from("rsvp")
         .select("convidados,mensagem,origem,created_at")
@@ -192,6 +219,7 @@
         setError(error.message || "Não foi possível carregar.");
         return;
       }
+
       buildSummary(data || []);
       renderRows(data || []);
       table.style.display = "table";
@@ -201,4 +229,3 @@
   </script>
 </body>
 </html>
-
