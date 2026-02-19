@@ -155,17 +155,11 @@ const fmtDate = (iso) => {
 
 const buildSummary = (rows) => {
   const guests = rows.flatMap(r => r.convidados || []);
-
   const total = guests.length;
   const criancas = guests.filter(g => isCrianca(g.nome)).length;
   const reais = total - criancas;
-
   const aceitosTotal = guests.filter(g => g.status === "aceito").length;
-
-  const aceitosReais = guests.filter(g =>
-    g.status === "aceito" && !isCrianca(g.nome)
-  ).length;
-
+  const aceitosReais = guests.filter(g => g.status === "aceito" && !isCrianca(g.nome)).length;
   const recusados = guests.filter(g => g.status === "recusado").length;
 
   summaryBox.innerHTML = `
@@ -178,9 +172,10 @@ const buildSummary = (rows) => {
   `;
 };
 
-const salvar = async (rowIndex) => {
+// Função de salvar atualizada
+const salvarNoBanco = async (rowIndex) => {
   const row = GLOBAL_DATA[rowIndex];
-
+  
   const { error } = await supabaseClient
     .from("rsvp")
     .update({ convidados: row.convidados })
@@ -188,52 +183,56 @@ const salvar = async (rowIndex) => {
 
   if (error) {
     alert("Erro ao salvar: " + error.message);
-    console.error(error);
   } else {
-    load();
+    // Recarrega os dados para garantir sincronia
+    await load();
   }
 };
 
-function editarNome(rowIndex, guestIndex) {
+// Tornando as funções globais para o onclick funcionar
+window.editarNome = (rowIndex, guestIndex) => {
   const convidado = GLOBAL_DATA[rowIndex].convidados[guestIndex];
-  const novoNome = prompt("Editar nome:", convidado.nome);
-  if (!novoNome) return;
-  convidado.nome = novoNome.trim();
-  salvar(rowIndex);
-}
+  const novoNome = prompt("Editar nome:", convidado.nome.replace(/\(Criança\)/gi, "").trim());
+  
+  if (novoNome === null) return; // Cancelou
+  
+  // Mantém a tag de criança se já existia
+  const sufixo = isCrianca(convidado.nome) ? " (Criança)" : "";
+  convidado.nome = novoNome.trim() + sufixo;
+  
+  salvarNoBanco(rowIndex);
+};
 
-function toggleCrianca(rowIndex, guestIndex) {
+window.toggleCrianca = (rowIndex, guestIndex) => {
   let nome = GLOBAL_DATA[rowIndex].convidados[guestIndex].nome;
 
   if (isCrianca(nome)) {
     nome = nome.replace(/\(Criança\)/gi, "").trim();
   } else {
-    nome += " (Criança)";
+    nome = nome.trim() + " (Criança)";
   }
 
   GLOBAL_DATA[rowIndex].convidados[guestIndex].nome = nome;
-  salvar(rowIndex);
-}
+  salvarNoBanco(rowIndex);
+};
 
-function excluirConvidado(rowIndex, guestIndex) {
-  if (!confirm("Excluir convidado?")) return;
+window.excluirConvidado = (rowIndex, guestIndex) => {
+  if (!confirm("Excluir este convidado?")) return;
   GLOBAL_DATA[rowIndex].convidados.splice(guestIndex, 1);
-  salvar(rowIndex);
-}
+  salvarNoBanco(rowIndex);
+};
 
 const renderRows = (rows) => {
   tbody.innerHTML = "";
-
   rows.forEach((row, rowIndex) => {
     (row.convidados || []).forEach((guest, guestIndex) => {
       const tr = document.createElement("tr");
-
-      const tag = isCrianca(guest.nome)
-        ? '<span class="tag">(Criança)</span>'
-        : '';
+      // Limpa o nome para exibição na célula, já que a tag vem depois
+      const nomeLimpo = guest.nome.replace(/\(Criança\)/gi, "").trim();
+      const tag = isCrianca(guest.nome) ? '<span class="tag">(Criança)</span>' : '';
 
       tr.innerHTML = `
-        <td>${guest.nome} ${tag}</td>
+        <td>${nomeLimpo} ${tag}</td>
         <td><span class="status ${guest.status === "aceito" ? "accept" : "decline"}">
           ${guest.status === "aceito" ? "Aceito" : "Recusado"}
         </span></td>
@@ -246,7 +245,6 @@ const renderRows = (rows) => {
           <button onclick="excluirConvidado(${rowIndex}, ${guestIndex})">🗑️</button>
         </td>
       `;
-
       tbody.appendChild(tr);
     });
   });
@@ -259,12 +257,11 @@ const load = async () => {
     .order("created_at", { ascending: false });
 
   if (error) {
-    alert(error.message);
+    console.error(error);
     return;
   }
 
   GLOBAL_DATA = data || [];
-
   loading.style.display = "none";
   table.style.display = "table";
 
