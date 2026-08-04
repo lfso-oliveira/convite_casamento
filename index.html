@@ -3,63 +3,105 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Convite de Casamento</title>
+  <title>15 Anos</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Montserrat:wght@300;400;500&family=Dancing+Script:wght@600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Outfit:wght@300;400;500&family=Great+Vibes&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header class="hero">
+    <div class="hero__media" aria-hidden="true"></div>
+    <div class="hero__veil" aria-hidden="true"></div>
     <div class="hero__content">
-      <p class="hero__title">O Nosso Casamento</p>
-      <img class="hero__logo" src="larissa.png" alt="Larissa &amp; Felipe">
+      <p class="hero__eyebrow reveal">Meu aniversário</p>
+      <h1 class="hero__title reveal">15 Anos</h1>
+      <div class="hero__ornament reveal" aria-hidden="true">
+        <span></span>
+        <i></i>
+        <span></span>
+      </div>
+      <p class="hero__date reveal">05 · 09 · 2026</p>
     </div>
+    <a class="hero__scroll" href="#mensagem" aria-label="Rolar para o convite">
+      <span></span>
+    </a>
   </header>
 
   <main>
-    <section class="quote">
-      <p class="quote__text">“Um cordão tríplice não pode ser facilmente rompido.”</p>
-      <p class="quote__ref">Eclesiastes 4:12</p>
-    </section>
-
-    <section class="photo-section" aria-label="Mãos entrelaçadas">
-      <img class="photo-section__img" src="mãos.png" alt="Mãos entrelaçadas">
-    </section>
-
-    <section class="invite">
-      <p class="invite__intro">E COM IMENSA ALEGRIA QUE CONVIDAMOS VOCÊ PARA COMEMORAR ESSE MOMENTO ÚNICO</p>
-      <p class="invite__date">02.05.26</p>
-      <p class="invite__time">SÁBADO ÀS 16:30H</p>
-    </section>
-
-    <section class="gallery" aria-label="Galeria de momentos">
-      <div class="gallery__grid">
-        <img class="gallery__img gallery__img--a" src="L&F-1.jpg" alt="Larissa e Felipe caminhando de mãos dadas">
-        <img class="gallery__img gallery__img--b" src="L&F-2.jpg" alt="Larissa e Felipe se abraçando e dançando">
-        <img class="gallery__img gallery__img--c" src="L&F-3.jpg" alt="Detalhe das mãos com alianças">
+    <section id="mensagem" class="message" aria-label="Mensagem do convite">
+      <div class="message__frame reveal">
+        <p class="message__script">você está sendo convidado</p>
+        <p class="message__lead">Para o meu aniversário de <em>15 anos</em>.</p>
+        <div class="ornament" aria-hidden="true">
+          <span></span><i></i><span></span>
+        </div>
+        <p class="message__body">
+          Há momentos que marcam uma vida para sempre. Este é um deles.
+        </p>
+        <p class="message__body">
+          Com muita alegria, convido você para celebrar comigo a realização de um grande sonho:
+          a comemoração dos meus <em>15 anos</em>.
+        </p>
+        <p class="message__body">
+          Sua presença tornará essa noite ainda mais especial, repleta de sorrisos, emoção e memórias inesquecíveis.
+        </p>
       </div>
     </section>
 
-    <section class="location" aria-label="Local da cerimônia e recepção">
-      <div class="location__card">
+    <section class="details" aria-label="Data e horário">
+      <div class="details__glow" aria-hidden="true"></div>
+      <div class="details__inner reveal">
+        <p class="details__kicker">A celebração</p>
+        <div class="details__grid">
+          <div class="details__item">
+            <p class="details__label">Data</p>
+            <p class="details__value">5 de setembro</p>
+            <p class="details__meta">Sábado</p>
+          </div>
+          <div class="details__diamond" aria-hidden="true"></div>
+          <div class="details__item">
+            <p class="details__label">Horário</p>
+            <p class="details__value">19:30</p>
+            <p class="details__meta">À noite</p>
+          </div>
+        </div>
+        <div class="details__dress">
+          <p class="details__label">Traje</p>
+          <p class="details__value details__value--sm">Esporte fino</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="location" aria-label="Local da festa">
+      <div class="location__inner reveal">
         <p class="location__script">local</p>
-        <p class="location__eyebrow">Cerimônia &amp; Recepção</p>
-        <h2 class="location__name">Sítio 03 irmãos</h2>
-        <p class="location__address">R. Joaquim Mizael Rosa, SN</p>
-        <p class="location__city">Realengo | Divinopólis</p>
-        <div class="location__line"></div>
+        <h2 class="location__name">Chácara Recanto da Amizade</h2>
+        <p class="location__address">Rua das Rosas, nº 937 — Bairro Capim</p>
+        <p class="location__city">Divinópolis – MG</p>
+        <div class="ornament ornament--light" aria-hidden="true">
+          <span></span><i></i><span></span>
+        </div>
         <div class="location__actions">
-          <a class="location__btn" href="https://maps.app.goo.gl/jW3iW8QwrLAAqswH6" aria-label="Ver localização">Localização</a>
-         
-          <a class="location__btn" href="#" data-open-rsvp aria-label="Confirmar presença">
-  Confirme sua presença
-</a>
+          <a
+            class="location__btn"
+            href="https://www.google.com/maps/search/?api=1&query=Ch%C3%A1cara+Recanto+da+Amizade+Rua+das+Rosas+937+Capim+Divin%C3%B3polis+MG"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Ver localização"
+          >Como chegar</a>
+          <a class="location__btn location__btn--solid" href="#" data-open-rsvp aria-label="Confirmar presença">
+            Confirmar presença
+          </a>
+        </div>
       </div>
     </section>
 
-    <section class="end-photo" aria-label="Foto final">
-      <img class="end-photo__img" src="L&F-104.png" alt="Larissa e Felipe">
+    <section class="closing" aria-label="Encerramento">
+      <div class="closing__inner reveal">
+        <p class="closing__text">Será uma honra compartilhar esse momento tão importante com você.</p>
+        <p class="closing__script">Espero por você!</p>
+      </div>
     </section>
   </main>
 
@@ -87,13 +129,13 @@
     </div>
   </div>
 
-    <section class="audio-player" aria-label="Trilha sonora">
-      <div id="audio-pill" class="audio-visualizer" role="button" tabindex="0" aria-label="Tocar ou pausar Those Eyes - New West">
-        <span class="audio-track">Those Eyes – New West</span>
-        <canvas id="music-visualizer" width="160" height="36" aria-hidden="true"></canvas>
-      </div>
-      <audio id="bg-music" src="musica.mp3" loop preload="auto" autoplay playsinline></audio>
-    </section>
+  <section class="audio-player" aria-label="Trilha sonora">
+    <div id="audio-pill" class="audio-visualizer" role="button" tabindex="0" aria-label="Tocar ou pausar Those Eyes - New West">
+      <span class="audio-track">Those Eyes – New West</span>
+      <canvas id="music-visualizer" width="160" height="36" aria-hidden="true"></canvas>
+    </div>
+    <audio id="bg-music" src="musica.mp3" loop preload="auto" autoplay playsinline></audio>
+  </section>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
@@ -108,6 +150,29 @@
       const closers = modal?.querySelectorAll("[data-close-rsvp]");
       const guestList = document.getElementById("guest-list");
       let guestsInitialized = false;
+
+      const revealEls = document.querySelectorAll(".reveal");
+      if ("IntersectionObserver" in window) {
+        const io = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                entry.target.classList.add("is-visible");
+                io.unobserve(entry.target);
+              }
+            });
+          },
+          { threshold: 0.18, rootMargin: "0px 0px -6% 0px" }
+        );
+        revealEls.forEach((el) => io.observe(el));
+      } else {
+        revealEls.forEach((el) => el.classList.add("is-visible"));
+      }
+
+      // Hero entra imediatamente
+      document.querySelectorAll(".hero .reveal").forEach((el, i) => {
+        setTimeout(() => el.classList.add("is-visible"), 180 + i * 140);
+      });
 
       if (!audio || !canvas || !ctx || !pill) return;
 
@@ -150,8 +215,8 @@
           const y = height - barHeight;
 
           const gradient = ctx.createLinearGradient(0, y, 0, height);
-          gradient.addColorStop(0, "#cdbca9");
-          gradient.addColorStop(1, "#9c7f63");
+          gradient.addColorStop(0, "#d4b896");
+          gradient.addColorStop(1, "#8a6f4d");
 
           ctx.fillStyle = gradient;
           if (ctx.roundRect) {
@@ -203,10 +268,8 @@
         }
       });
 
-      // Tenta tocar automaticamente ao abrir
       playMusic();
 
-      // Se o autoplay for bloqueado, tenta novamente na primeira interação
       const interactionHandler = async () => {
         await playMusic();
       };
@@ -220,7 +283,6 @@
         );
       });
 
-      // RSVP via Supabase
       const form = document.getElementById("rsvp-form");
       const submitBtn = document.getElementById("rsvp-submit");
       const feedback = document.getElementById("rsvp-feedback");
@@ -250,7 +312,6 @@
             return;
           }
 
-          const formData = new FormData(form);
           const guests = Array.from(form.querySelectorAll(".rsvp__guest"))
             .map((el) => {
               const name = el.querySelector('input[name="convidados[]"]')?.value.trim();
@@ -309,14 +370,12 @@
           }
         });
 
-        // Captura partes sem "=" em querys como ?fulano&beltrano
         search
           .split("&")
           .filter((p) => p && !p.includes("="))
           .map((p) => decodeURIComponent(p).trim())
           .forEach((p) => names.push(p));
 
-        // Se houver "nomes=" com "&", já foi pego acima; garante deduplicação
         return Array.from(new Set(names.filter(Boolean)));
       };
 
@@ -386,7 +445,6 @@
         guestsInitialized = true;
       };
 
-      // Focus trap básico dentro do modal
       const focusableSelectors =
         'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
       modalDialog?.addEventListener("keydown", (evt) => {
@@ -449,4 +507,3 @@
   </script>
 </body>
 </html>
-
