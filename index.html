@@ -97,6 +97,26 @@
       </div>
     </section>
 
+    <section class="gift" aria-label="Presente via Pix">
+      <div class="gift__inner reveal">
+        <p class="gift__script">presente</p>
+        <p class="gift__text">
+          Sua presença já é o maior presente. Mas, se quiser me presentear,
+          pode enviar através da chave Pix:
+        </p>
+        <button
+          type="button"
+          class="gift__btn"
+          id="pix-copy-btn"
+          data-pix="13206401682"
+          aria-label="Copiar chave Pix"
+        >
+          Copiar chave Pix
+        </button>
+        <p class="gift__feedback" id="pix-feedback" aria-live="polite"></p>
+      </div>
+    </section>
+
     <section class="closing" aria-label="Encerramento">
       <div class="closing__inner reveal">
         <p class="closing__text">Será uma honra compartilhar esse momento tão importante com você.</p>
@@ -173,6 +193,28 @@
       document.querySelectorAll(".hero .reveal").forEach((el, i) => {
         setTimeout(() => el.classList.add("is-visible"), 180 + i * 140);
       });
+
+      const pixBtn = document.getElementById("pix-copy-btn");
+      const pixFeedback = document.getElementById("pix-feedback");
+      if (pixBtn) {
+        pixBtn.addEventListener("click", async () => {
+          const key = pixBtn.dataset.pix || "13206401682";
+          try {
+            await navigator.clipboard.writeText(key);
+            pixBtn.classList.add("is-copied");
+            pixBtn.textContent = "Chave copiada!";
+            if (pixFeedback) pixFeedback.textContent = key;
+            setTimeout(() => {
+              pixBtn.classList.remove("is-copied");
+              pixBtn.textContent = "Copiar chave Pix";
+            }, 2200);
+          } catch (err) {
+            if (pixFeedback) {
+              pixFeedback.textContent = `Chave Pix: ${key}`;
+            }
+          }
+        });
+      }
 
       if (!audio || !canvas || !ctx || !pill) return;
 
@@ -286,8 +328,8 @@
       const form = document.getElementById("rsvp-form");
       const submitBtn = document.getElementById("rsvp-submit");
       const feedback = document.getElementById("rsvp-feedback");
-      const SUPABASE_URL = "https://jlkelwndkdsqlltjtamq.supabase.co";
-      const SUPABASE_ANON_KEY = "sb_publishable_HLEnnvbxQt7jHzHhThK9bw_PzcdI2F2";
+      const SUPABASE_URL = "https://ryshakfrrjxkjlahtkzc.supabase.co";
+      const SUPABASE_ANON_KEY = "sb_publishable_1I4ijX-LaH_YKsR9SmXA4Q_Rl_w0ZiF";
       const hasRealConfig =
         SUPABASE_URL && SUPABASE_ANON_KEY &&
         !SUPABASE_URL.includes("SEU_PROJETO") &&

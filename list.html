@@ -118,7 +118,6 @@
       <tr>
         <th>Convidado</th>
         <th>Status</th>
-        <th>Mensagem</th>
         <th>Origem</th>
         <th>Data</th>
         <th>Ações</th>
@@ -131,8 +130,9 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
-const SUPABASE_URL = "https://jlkelwndkdsqlltjtamq.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_HLEnnvbxQt7jHzHhThK9bw_PzcdI2F2";
+  
+const SUPABASE_URL = "https://ryshakfrrjxkjlahtkzc.supabase.co";
+      const SUPABASE_ANON_KEY = "sb_publishable_1I4ijX-LaH_YKsR9SmXA4Q_Rl_w0ZiF";
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -175,31 +175,76 @@ const buildSummary = (rows) => {
 // Função de salvar atualizada
 const salvarNoBanco = async (rowIndex) => {
   const row = GLOBAL_DATA[rowIndex];
-  
-  const { error } = await supabaseClient
+
+  if (!row?.id) {
+    alert("Registro sem id. Recarregue a página.");
+    return;
+  }
+
+  // Se não sobrou ninguém, apaga o registro inteiro
+  if (!row.convidados.length) {
+    const { data, error } = await supabaseClient
+      .from("rsvp")
+      .delete()
+      .eq("id", row.id)
+      .select("id");
+
+    if (error) {
+      alert("Erro ao apagar: " + error.message);
+      await load();
+      return;
+    }
+
+    if (!data?.length) {
+      alert(
+        "Não foi possível apagar: falta permissão de DELETE no Supabase (RLS).\n\n" +
+        "Rode no SQL Editor:\n" +
+        'create policy "Permitir delete" on rsvp for delete to anon using (true);'
+      );
+      await load();
+      return;
+    }
+
+    await load();
+    return;
+  }
+
+  const { data, error } = await supabaseClient
     .from("rsvp")
     .update({ convidados: row.convidados })
-    .eq("id", row.id);
+    .eq("id", row.id)
+    .select("id");
 
   if (error) {
     alert("Erro ao salvar: " + error.message);
-  } else {
-    // Recarrega os dados para garantir sincronia
     await load();
+    return;
   }
+
+  if (!data?.length) {
+    alert(
+      "Não foi possível salvar: falta permissão de UPDATE no Supabase (RLS).\n\n" +
+      "Rode no SQL Editor:\n" +
+      'create policy "Permitir update" on rsvp for update to anon using (true) with check (true);'
+    );
+    await load();
+    return;
+  }
+
+  await load();
 };
 
 // Tornando as funções globais para o onclick funcionar
 window.editarNome = (rowIndex, guestIndex) => {
   const convidado = GLOBAL_DATA[rowIndex].convidados[guestIndex];
   const novoNome = prompt("Editar nome:", convidado.nome.replace(/\(Criança\)/gi, "").trim());
-  
+
   if (novoNome === null) return; // Cancelou
-  
+
   // Mantém a tag de criança se já existia
   const sufixo = isCrianca(convidado.nome) ? " (Criança)" : "";
   convidado.nome = novoNome.trim() + sufixo;
-  
+
   salvarNoBanco(rowIndex);
 };
 
@@ -216,10 +261,10 @@ window.toggleCrianca = (rowIndex, guestIndex) => {
   salvarNoBanco(rowIndex);
 };
 
-window.excluirConvidado = (rowIndex, guestIndex) => {
+window.excluirConvidado = async (rowIndex, guestIndex) => {
   if (!confirm("Excluir este convidado?")) return;
   GLOBAL_DATA[rowIndex].convidados.splice(guestIndex, 1);
-  salvarNoBanco(rowIndex);
+  await salvarNoBanco(rowIndex);
 };
 
 const renderRows = (rows) => {
@@ -236,7 +281,6 @@ const renderRows = (rows) => {
         <td><span class="status ${guest.status === "aceito" ? "accept" : "decline"}">
           ${guest.status === "aceito" ? "Aceito" : "Recusado"}
         </span></td>
-        <td>${row.mensagem || ""}</td>
         <td>${row.origem || "-"}</td>
         <td>${fmtDate(row.created_at)}</td>
         <td>
@@ -253,17 +297,28 @@ const renderRows = (rows) => {
 const load = async () => {
   const { data, error } = await supabaseClient
     .from("rsvp")
-    .select("id,convidados,mensagem,origem,created_at")
+    .select("id,convidados,origem,created_at")
     .order("created_at", { ascending: false });
 
   if (error) {
     console.error(error);
+    loading.textContent = `Erro ao carregar: ${error.message}`;
+    loading.style.color = "var(--red)";
     return;
   }
 
   GLOBAL_DATA = data || [];
   loading.style.display = "none";
   table.style.display = "table";
+
+  if (!GLOBAL_DATA.length) {
+    loading.style.display = "block";
+    loading.style.color = "var(--muted)";
+    loading.textContent = "Nenhuma confirmação ainda.";
+    table.style.display = "none";
+    buildSummary([]);
+    return;
+  }
 
   buildSummary(GLOBAL_DATA);
   renderRows(GLOBAL_DATA);
